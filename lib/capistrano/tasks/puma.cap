@@ -97,7 +97,12 @@ namespace :puma do
           with rack_env: fetch(:puma_env) do
             if test "[ -f #{fetch(:puma_pid)} ]" and test "kill -0 $( cat #{fetch(:puma_pid)} )"
               # NOTE pid exist but state file is nonsense, so ignore that case
-              execute :bundle, 'exec', :pumactl, "-S #{fetch(:puma_state)} #{command}"
+              # This is what should be done if puma was not broken about restart
+              # when Gemfile.lock is changed:
+              # execute :bundle, 'exec', :pumactl, "-S #{fetch(:puma_state)} #{command}"
+              # However, since puma IS broken, have to do a hard restart
+              invoke 'puma:stop'
+              invoke 'puma:start'
             else
               # Puma is not running or state file is not present : Run it
               invoke 'puma:start'
